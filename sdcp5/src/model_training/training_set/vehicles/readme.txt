@@ -1,1 +1,1 @@
-Download and extract "vehicles.zip" from the sdcp5 s3 bucket
+Download and extract https://s3.amazonaws.com/sdcp5/vehicles.zip within this directory.
