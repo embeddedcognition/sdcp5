@@ -1,1 +1,1 @@
-Download and extract "non_vehicles.zip" from the sdcp5 s3 bucket
+Download and extract https://s3.amazonaws.com/sdcp5/non_vehicles.zip within this directory.
