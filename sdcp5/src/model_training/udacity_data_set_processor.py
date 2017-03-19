@@ -41,4 +41,4 @@ with open("udacity_data_set_1/labels.csv") as file_handle:
                 resized_cropped_cur_frame = cv2.resize(cropped_cur_frame, (64, 64))
                 #save the processed frame
                 #given the fact that multiple labels can exist in the same frame, we need to ensure file name uniqueness
-                cv2.imwrite("training_set/vehicles/objects_extracted_from_udacity_dataset_1/" + str(uuid.uuid4()) + "_" + cur_dict_line["Frame"], resized_cropped_cur_frame)
+                cv2.imwrite("training_set/vehicles/objects_extracted_from_udacity_data_set_1/" + str(uuid.uuid4()) + "_" + cur_dict_line["Frame"], resized_cropped_cur_frame)
