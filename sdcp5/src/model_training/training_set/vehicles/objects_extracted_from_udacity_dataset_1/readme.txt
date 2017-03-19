@@ -1,0 +1,1 @@
+Download and extract "objects_extracted_from_udacity_dataset_1.zip" from the sdcp5 s3 bucket

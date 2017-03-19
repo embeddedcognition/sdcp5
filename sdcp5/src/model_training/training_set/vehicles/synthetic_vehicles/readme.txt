@@ -1,0 +1,1 @@
+Download and extract "synthetic_vehicles.zip" from the sdcp5 s3 bucket

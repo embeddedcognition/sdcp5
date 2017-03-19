@@ -1,0 +1,1 @@
+Download and extract "udacity_data_set_1.tar.gz" from the sdcp5 s3 bucket
