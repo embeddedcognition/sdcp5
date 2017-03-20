@@ -14,7 +14,7 @@ import uuid
 #this data contains real world images with bounding boxes designating the labeled objects (Car, Truck, Pedestrian)
 #pre-process udacity data set 1 for usage in training set
 #pre-processing steps: load file, crop to bounding box dimensions, resize to 64x64x3, save to training set
-with open("udacity_data_set_1/labels.csv") as file_handle:
+with open("data_sets/udacity_data_set_1/labels.csv") as file_handle:
     #view file rows as a dictionary (based on header row)
     dict_reader = csv.DictReader(file_handle)
     #get current row as dictionary
@@ -24,7 +24,7 @@ with open("udacity_data_set_1/labels.csv") as file_handle:
         #ignore pedestrian data (we only care about cars and trucks)
         if (cur_label != "Pedestrian"):
             #load the current frame
-            cur_frame = cv2.imread("udacity_data_set_1/" + cur_dict_line["Frame"])
+            cur_frame = cv2.imread("data_sets/udacity_data_set_1/" + cur_dict_line["Frame"])
             #extract bounding boxes
             row_min = int(cur_dict_line["xmax"]) #the csv header row is incorrect (this value acually contains the ymin), but we work around it
             row_max = int(cur_dict_line["ymax"])
@@ -41,4 +41,4 @@ with open("udacity_data_set_1/labels.csv") as file_handle:
                 resized_cropped_cur_frame = cv2.resize(cropped_cur_frame, (64, 64))
                 #save the processed frame
                 #given the fact that multiple labels can exist in the same frame, we need to ensure file name uniqueness
-                cv2.imwrite("training_set/vehicles/objects_extracted_from_udacity_data_set_1/" + str(uuid.uuid4()) + "_" + cur_dict_line["Frame"], resized_cropped_cur_frame)
+                cv2.imwrite("data_sets/vehicles/objects_extracted_from_udacity_data_set_1/" + str(uuid.uuid4()) + "_" + cur_dict_line["Frame"], resized_cropped_cur_frame)
