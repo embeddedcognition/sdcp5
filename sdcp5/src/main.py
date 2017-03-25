@@ -8,8 +8,8 @@
 ## IMPORTS ##
 #############
 import numpy as np
-from calibration_processor import generate_calibration_components
-from perspective_processor import generate_perspective_transform_components
+from sdcp4.calibration_processor import generate_calibration_components
+from sdcp4.perspective_processor import generate_perspective_transform_components
 from test_pipeline import execute_test_pipeline
 from production_pipeline import execute_production_pipeline
 
@@ -81,4 +81,4 @@ execute_test_pipeline(calibration_components, perspective_transform_components, 
 #########################
 
 #execute the pipeline (producing a video that is saved to the output_video directory)   
-execute_production_pipeline(calibration_components, perspective_transform_components)
+#execute_production_pipeline(calibration_components, perspective_transform_components)

@@ -1,8 +1,8 @@
-####################################################
-## AUTHOR: James Beasley                          ##
-## DATE: February 18, 2017                        ##
-## UDACITY SDC: Project 4 (Advanced Lane Finding) ##
-####################################################
+#########################################################
+## AUTHOR: James Beasley                               ##
+## DATE: March 18, 2017                                ##
+## UDACITY SDC: Project 5 (Vehicle Detection/Tracking) ##
+#########################################################
 
 #############
 ## IMPORTS ##
@@ -11,10 +11,10 @@ import cv2
 import numpy as np
 from collections import deque
 from moviepy.editor import VideoFileClip
-from calibration_processor import perform_undistort
-from perspective_processor import perform_perspective_transform
-from threshold_processor import perform_thresholding
-from lane_processor import perform_educated_lane_line_pixel_search, perform_blind_lane_line_pixel_search, compute_lane_line_coefficients, compute_curvature_of_lane_lines, compute_vehicle_offset
+from sdcp4.calibration_processor import perform_undistort
+from sdcp4.perspective_processor import perform_perspective_transform
+from sdcp4.threshold_processor import perform_thresholding
+from sdcp4.lane_processor import perform_educated_lane_line_pixel_search, perform_blind_lane_line_pixel_search, compute_lane_line_coefficients, compute_curvature_of_lane_lines, compute_vehicle_offset
 
 #globals
 calibration_components = None

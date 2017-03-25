@@ -10,7 +10,7 @@
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
-from threshold_processor import compute_hot_pixel_density_across_x_axis
+from sdcp4.threshold_processor import compute_hot_pixel_density_across_x_axis
 
 #estimate the base location (index) of the lane lines using the hot (value of 1) pixel density across the bottom half of the image
 def estimate_index_of_lane_line_base(image, export_debug_image=False):
