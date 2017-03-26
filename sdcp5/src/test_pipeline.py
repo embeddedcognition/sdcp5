@@ -9,10 +9,13 @@
 #############
 import cv2
 import numpy as np
+import pickle
+from scipy.ndimage.measurements import label
 from sdcp4.calibration_processor import perform_undistort
 from sdcp4.perspective_processor import perform_perspective_transform
 from sdcp4.threshold_processor import perform_thresholding
-from sdcp4.lane_processor import perform_educated_lane_line_pixel_search, perform_blind_lane_line_pixel_search, compute_lane_line_coefficients, compute_curvature_of_lane_lines, compute_vehicle_offset
+from sdcp4.lane_processor import *
+from vehicle_processor import *
 
 #test the pipeline components and produce outputs in the output_images directory
 #perspective_transform_components[0] is warp_perspective_matrix, perspective_transform_components[1] is unwarp_perspective_matrix
@@ -105,6 +108,43 @@ def execute_test_pipeline(calibration_components, perspective_transform_componen
     font = cv2.FONT_HERSHEY_SIMPLEX
     cv2.putText(projected_lane, 'Lane curvature: {0:.2f} meters'.format(np.mean([left_curvature, right_curvature])), (20, 50), font, 1, (255, 255, 255), 2, cv2.LINE_AA)
     cv2.putText(projected_lane, 'Vehicle offset: {0:.2f} meters'.format(vehicle_offset), (20, 100), font, 1, (255, 255, 255), 2, cv2.LINE_AA)
+    
+    ######################################
+    ## TEST VEHICLE DETECTION/TRACKING  ##
+    ######################################
+    
+    #hyperparameters
+    spatial_reduction_size = 32   #reduce the training images from 64x64 to 32x32 resolution (smaller feature vector but still retains useful shape and color information)
+    pixel_intensity_fd_bins = 64  #number of bins to use to compute raw pixel intensity frequency distribution
+    hog_orientation_bins =  9     #number of orientation bins to use in hog feature extraction
+    hog_pixels_per_cell = 8       #number of pixels per cell to use in hog feature extraction
+    hog_cells_per_block = 2       #number of cells per block to use in hog feature extraction
+    scale_factor_list = [2.0, 1.5, 1.2, 1] #window scales
+    y_axis_start = 400 #start y-axis crop
+    y_axis_stop = 656  #end y-axis crop
+
+    dist_pickle = pickle.load( open("model_training/pickled_objects/trained_model.p", "rb" ) )
+    support_vector_classifier = dist_pickle["model"]
+    X_feature_scaler = dist_pickle["scaler"]
+    
+    #for the current frame, detect vehicles at each scale, 
+    #returning the list of coordinates (p1 and p2) of the window that signaled a positive prediction
+    positive_detection_window_coordinates = perform_vehicle_search(undistorted_test_road_image, y_axis_start, y_axis_stop, scale_factor_list, support_vector_classifier, X_feature_scaler, spatial_reduction_size, pixel_intensity_fd_bins, hog_orientation_bins, hog_pixels_per_cell, hog_cells_per_block)
+
+    #create a heat map
+    heatmap = np.zeros_like(undistorted_test_road_image[:,:,0]).astype(np.float)
+    
+    #apply heat to all pixels within the set of detected windows
+    heatmap = apply_heat_to_heatmap(heatmap, positive_detection_window_coordinates)
+    
+    #apply threshold to heatmap to help remove false positives
+    #heatmap = apply_threshold_to_heatmap(heatmap, 3)
+    
+    #compute final bounding boxes from heatmap
+    labeled_objects = label(heatmap)
+    
+    #draw final bounding boxes on projected lane image
+    projected_lane = draw_bounding_boxes_for_labeled_objects(projected_lane, labeled_objects)
     
     #save image
     #convert from rgb to bgr (the format opencv likes)

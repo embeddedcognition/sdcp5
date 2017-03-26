@@ -81,4 +81,4 @@ execute_test_pipeline(calibration_components, perspective_transform_components, 
 #########################
 
 #execute the pipeline (producing a video that is saved to the output_video directory)   
-#execute_production_pipeline(calibration_components, perspective_transform_components)
+execute_production_pipeline(calibration_components, perspective_transform_components)

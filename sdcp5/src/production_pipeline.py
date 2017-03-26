@@ -9,18 +9,36 @@
 #############
 import cv2
 import numpy as np
+import pickle
+from scipy.ndimage.measurements import label
 from collections import deque
 from moviepy.editor import VideoFileClip
 from sdcp4.calibration_processor import perform_undistort
 from sdcp4.perspective_processor import perform_perspective_transform
 from sdcp4.threshold_processor import perform_thresholding
-from sdcp4.lane_processor import perform_educated_lane_line_pixel_search, perform_blind_lane_line_pixel_search, compute_lane_line_coefficients, compute_curvature_of_lane_lines, compute_vehicle_offset
+from sdcp4.lane_processor import *
+from vehicle_processor import *
 
-#globals
+#globals for advanced lane finding
 calibration_components = None
 perspective_transform_components = None #perspective_transform_components[0] is warp_perspective_matrix, perspective_transform_components[1] is unwarp_perspective_matrix
 prev_left_lane_line_coeff_queue = None
 prev_right_lane_line_coeff_queue = None
+
+#globals for vehicle detection
+spatial_reduction_size = 32   #reduce the training images from 64x64 to 32x32 resolution (smaller feature vector but still retains useful shape and color information)
+pixel_intensity_fd_bins = 64  #number of bins to use to compute raw pixel intensity frequency distribution
+hog_orientation_bins =  9     #number of orientation bins to use in hog feature extraction
+hog_pixels_per_cell = 8       #number of pixels per cell to use in hog feature extraction
+hog_cells_per_block = 2       #number of cells per block to use in hog feature extraction
+scale_factor_list = [2.0, 1.5, 1.2, 1] #window scales
+y_axis_start = 400 #start y-axis crop
+y_axis_stop = 656  #end y-axis crop
+#pickled objects to be loaded
+support_vector_classifier = None
+X_feature_scaler = None
+#queue containing (up to) last 15 frames of windows
+prev_positive_detection_window_coordinates_by_frame_queue = None
 
 #run the pipeline on the provided video
 def execute_production_pipeline(my_calibration_components, my_perspective_transform_components):
@@ -29,16 +47,28 @@ def execute_production_pipeline(my_calibration_components, my_perspective_transf
     global perspective_transform_components
     global prev_left_lane_line_coeff_queue
     global prev_right_lane_line_coeff_queue
+    global support_vector_classifier
+    global X_feature_scaler
+    global prev_positive_detection_window_coordinates_by_frame_queue
 
-    #set globals
+    #set advance lane finding globals
     calibration_components = my_calibration_components
     perspective_transform_components= my_perspective_transform_components
     #initialize queues (storing a max of 10 sets of polynomial coefficients for both the left and right lanes
     prev_left_lane_line_coeff_queue = deque(maxlen=10)
     prev_right_lane_line_coeff_queue = deque(maxlen=10)
 
+    #set vehicle detection globals
+    #load and extract model and scaler
+    dist_pickle = pickle.load(open("model_training/pickled_objects/trained_model.p", "rb" ))
+    support_vector_classifier = dist_pickle["model"]
+    X_feature_scaler = dist_pickle["scaler"]
+    #initialize queue (storing a max of 15 frames of positive detection window coordinates)
+    prev_positive_detection_window_coordinates_by_frame_queue = deque(maxlen=15)
+
     #generate video
-    clip_handle = VideoFileClip("test_video/project_video.mp4")
+    #clip_handle = VideoFileClip("test_video/project_video.mp4")
+    clip_handle = VideoFileClip("test_video/test_video.mp4")
     image_handle = clip_handle.fl_image(process_frame)
     image_handle.write_videofile("output_video/processed_project_video.mp4", audio=False)
 
@@ -150,5 +180,43 @@ def process_frame(image):
     cv2.putText(projected_lane, 'Lane curvature: {0:.2f} meters'.format(np.mean([left_curvature, right_curvature])), (20, 50), font, 1, (255, 255, 255), 2, cv2.LINE_AA)
     cv2.putText(projected_lane, 'Vehicle offset: {0:.2f} meters'.format(vehicle_offset), (20, 100), font, 1, (255, 255, 255), 2, cv2.LINE_AA)
 
+    #########################################
+    ## PERFORM VEHICLE DETECTION/TRACKING  ##
+    #########################################
+    
+    #for the current frame, detect vehicles at each scale, 
+    #returning the list of coordinates (p1 and p2) of the window that signaled a positive prediction
+    positive_detection_window_coordinates = perform_vehicle_search(undistorted_image, y_axis_start, y_axis_stop, scale_factor_list, support_vector_classifier, X_feature_scaler, spatial_reduction_size, pixel_intensity_fd_bins, hog_orientation_bins, hog_pixels_per_cell, hog_cells_per_block)
+
+    #add positive detection window coordinates from current frame to queue
+    prev_positive_detection_window_coordinates_by_frame_queue.append(positive_detection_window_coordinates)
+
+    #create a heat map
+    heatmap = np.zeros_like(undistorted_image[:, :, 0]).astype(np.float)
+    
+    #enumerate the set of frames in the queue applying heat for each
+    for cur_frame_positive_detection_window_coordinates in prev_positive_detection_window_coordinates_by_frame_queue:
+        #apply heat to all pixels within the set of detected windows in the current frame
+        heatmap = apply_heat_to_heatmap(heatmap, cur_frame_positive_detection_window_coordinates)
+    
+    #apply heat to all pixels within the set of detected windows
+    #heatmap = apply_heat_to_heatmap(heatmap, positive_detection_window_coordinates)
+
+    #apply threshold to heatmap to help remove false positives
+    #heatmap = apply_threshold_to_heatmap(heatmap, 15) 
+    
+    #add heatmap to queue
+    #prev_positive_detection_window_coordinates_by_frame_queue.append(heatmap)
+    
+    #take mean of heat maps and use
+    #mean_heatmap = np.mean(prev_positive_detection_window_coordinates_by_frame_queue, axis=0)
+    #heatmap = mean_heatmap
+    
+    #compute final bounding boxes from heatmap
+    labeled_objects = label(heatmap)
+    
+    #draw final bounding boxes on projected lane image
+    projected_lane = draw_bounding_boxes_for_labeled_objects(projected_lane, labeled_objects)
+    
     #return processed frame for inclusion in processed video    
     return projected_lane 

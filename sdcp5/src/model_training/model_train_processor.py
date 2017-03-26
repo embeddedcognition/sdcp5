@@ -43,7 +43,7 @@ def perform_feature_extraction(X, spatial_reduction_size, pixel_intensity_fd_bin
             #perform histogram of oriented gradients (hog) operation, returning a feature vector
             hog_features_by_channel.append(perform_hog_feature_extraction(cur_ycrcb_image[:, :, channel], hog_orientation_bins, hog_pixels_per_cell, hog_cells_per_block, True, False))
         #stack the rows (one for each channel) of the hog feature list horizontally into one long feature vector
-        raw_pixel_intensity_gradient_features = np.hstack(hog_features_by_channel)  
+        raw_pixel_intensity_gradient_features = np.ravel(hog_features_by_channel)  
         #concatenate the 3 feature vectors and add them 
         X_features.append(np.concatenate((raw_pixel_intensity_features, raw_pixel_intensity_fd_features, raw_pixel_intensity_gradient_features)))
     #return features
