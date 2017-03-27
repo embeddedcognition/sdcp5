@@ -200,7 +200,7 @@ def process_frame(image):
         heatmap = apply_heat_to_heatmap(heatmap, cur_frame_positive_detection_window_coordinates)
 
     #apply threshold to heatmap to help remove false positives
-    heatmap = apply_threshold_to_heatmap(heatmap, 20) 
+    heatmap = apply_threshold_to_heatmap(heatmap, 23) 
     
     #compute final bounding boxes from heatmap
     labeled_objects = label(heatmap)
