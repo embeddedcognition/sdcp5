@@ -25,7 +25,7 @@ num_column_points = 9  #total inside corner points across the x-axis
 num_row_points = 6     #total inside corner points across the y-axis
 
 #path to calibration images
-path_to_calibration_images = "camera_cal/*.jpg"
+path_to_calibration_images = "sdcp4/camera_cal/*.jpg"
 
 #generate calibration componenets used to perform undistort
 camera_matrix, distortion_coeff = generate_calibration_components(num_column_points, num_row_points, path_to_calibration_images, camera_image_size)
