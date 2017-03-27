@@ -116,7 +116,7 @@ def execute_test_pipeline(calibration_components, perspective_transform_componen
     #hyperparameters
     spatial_reduction_size = 32   #reduce the training images from 64x64 to 32x32 resolution (smaller feature vector but still retains useful shape and color information)
     pixel_intensity_fd_bins = 64  #number of bins to use to compute raw pixel intensity frequency distribution
-    hog_orientation_bins =  9     #number of orientation bins to use in hog feature extraction
+    hog_orientation_bins = 9      #number of orientation bins to use in hog feature extraction
     hog_pixels_per_cell = 8       #number of pixels per cell to use in hog feature extraction
     hog_cells_per_block = 2       #number of cells per block to use in hog feature extraction
     scale_factor_list = [2.0, 1.5, 1.2, 1] #window scales
@@ -138,7 +138,7 @@ def execute_test_pipeline(calibration_components, perspective_transform_componen
     heatmap = apply_heat_to_heatmap(heatmap, positive_detection_window_coordinates)
     
     #apply threshold to heatmap to help remove false positives
-    #heatmap = apply_threshold_to_heatmap(heatmap, 3)
+    heatmap = apply_threshold_to_heatmap(heatmap, 3)
     
     #compute final bounding boxes from heatmap
     labeled_objects = label(heatmap)

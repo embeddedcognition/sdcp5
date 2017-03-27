@@ -28,7 +28,7 @@ prev_right_lane_line_coeff_queue = None
 #globals for vehicle detection
 spatial_reduction_size = 32   #reduce the training images from 64x64 to 32x32 resolution (smaller feature vector but still retains useful shape and color information)
 pixel_intensity_fd_bins = 64  #number of bins to use to compute raw pixel intensity frequency distribution
-hog_orientation_bins =  9     #number of orientation bins to use in hog feature extraction
+hog_orientation_bins = 9      #number of orientation bins to use in hog feature extraction
 hog_pixels_per_cell = 8       #number of pixels per cell to use in hog feature extraction
 hog_cells_per_block = 2       #number of cells per block to use in hog feature extraction
 scale_factor_list = [2.0, 1.5, 1.2, 1] #window scales
@@ -67,8 +67,8 @@ def execute_production_pipeline(my_calibration_components, my_perspective_transf
     prev_positive_detection_window_coordinates_by_frame_queue = deque(maxlen=15)
 
     #generate video
-    #clip_handle = VideoFileClip("test_video/project_video.mp4")
-    clip_handle = VideoFileClip("test_video/test_video.mp4")
+    clip_handle = VideoFileClip("test_video/project_video.mp4")
+    #clip_handle = VideoFileClip("test_video/test_video.mp4")
     image_handle = clip_handle.fl_image(process_frame)
     image_handle.write_videofile("output_video/processed_project_video.mp4", audio=False)
 
@@ -198,19 +198,9 @@ def process_frame(image):
     for cur_frame_positive_detection_window_coordinates in prev_positive_detection_window_coordinates_by_frame_queue:
         #apply heat to all pixels within the set of detected windows in the current frame
         heatmap = apply_heat_to_heatmap(heatmap, cur_frame_positive_detection_window_coordinates)
-    
-    #apply heat to all pixels within the set of detected windows
-    #heatmap = apply_heat_to_heatmap(heatmap, positive_detection_window_coordinates)
 
     #apply threshold to heatmap to help remove false positives
-    #heatmap = apply_threshold_to_heatmap(heatmap, 15) 
-    
-    #add heatmap to queue
-    #prev_positive_detection_window_coordinates_by_frame_queue.append(heatmap)
-    
-    #take mean of heat maps and use
-    #mean_heatmap = np.mean(prev_positive_detection_window_coordinates_by_frame_queue, axis=0)
-    #heatmap = mean_heatmap
+    heatmap = apply_threshold_to_heatmap(heatmap, 20) 
     
     #compute final bounding boxes from heatmap
     labeled_objects = label(heatmap)

@@ -98,7 +98,7 @@ print()
 #hyperparameters
 spatial_reduction_size = 32   #reduce the training images from 64x64 to 32x32 resolution (smaller feature vector but still retains useful shape and color information)
 pixel_intensity_fd_bins = 64  #number of bins to use to compute raw pixel intensity frequency distribution
-hog_orientation_bins =  9     #number of orientation bins to use in hog feature extraction
+hog_orientation_bins = 9      #number of orientation bins to use in hog feature extraction
 hog_pixels_per_cell = 8       #number of pixels per cell to use in hog feature extraction
 hog_cells_per_block = 2       #number of cells per block to use in hog feature extraction
 

@@ -81,7 +81,7 @@ def perform_vehicle_search(image, y_axis_start, y_axis_stop, scale_factor_list, 
         nxblocks = (y_channel.shape[1] // hog_pixels_per_cell) - 1
         nyblocks = (y_channel.shape[0] // hog_pixels_per_cell) - 1 
         nfeat_per_block = hog_orientation_bins * (hog_cells_per_block ** 2)
-        # 64 was the orginal sampling rate, with 8 cells and 8 pix per cell
+        #64 was the orginal sampling rate, with 8 cells and 8 pix per cell
         window = 64
         nblocks_per_window = (window // hog_pixels_per_cell) - 1 
         cells_per_step = 2  # Instead of overlap, define how many cells to step
@@ -91,15 +91,14 @@ def perform_vehicle_search(image, y_axis_start, y_axis_stop, scale_factor_list, 
         y_channel_hog_features = perform_hog_feature_extraction(y_channel, hog_orientation_bins, hog_pixels_per_cell, hog_cells_per_block, False, False)
         cr_channel_hog_features = perform_hog_feature_extraction(cr_channel, hog_orientation_bins, hog_pixels_per_cell, hog_cells_per_block, False, False)
         cb_channel_hog_features = perform_hog_feature_extraction(cb_channel, hog_orientation_bins, hog_pixels_per_cell, hog_cells_per_block, False, False)
-    
         #travese the grid
         for xb in range(nxsteps):
             for yb in range(nysteps):
+                #set values
                 ypos = yb*cells_per_step
                 xpos = xb*cells_per_step
                 xleft = xpos * hog_pixels_per_cell
                 ytop = ypos * hog_pixels_per_cell
-                
                 # Extract HOG for this patch
                 #given the discontinuities at the edges of the sub-images that will be present given this extraction
                 #method (vs. running hog on a patch at a time) false positives will increase....the tradeoff is for speed
@@ -108,10 +107,8 @@ def perform_vehicle_search(image, y_axis_start, y_axis_stop, scale_factor_list, 
                 hog_feat3 = np.ravel(cb_channel_hog_features[ypos:ypos+nblocks_per_window, xpos:xpos+nblocks_per_window]) 
                 #horisontally stack the features into a vector
                 raw_pixel_intensity_gradient_features = np.hstack((hog_feat1, hog_feat2, hog_feat3))
-
                 #extract image patch
                 cur_image_patch = cv2.resize(ycrcb_cropped_image[ytop:ytop+window, xleft:xleft+window], (64, 64))
-          
                 ## EXTRACT RAW PIXEL INTENSITY FEATURES (TARGETING COLOR & SHAPE) ##
                 #reduce resolution while still preserving relevant features
                 #raw pixel intensities (even when down-sampled) reveal color and shape characteristics
@@ -123,13 +120,18 @@ def perform_vehicle_search(image, y_axis_start, y_axis_stop, scale_factor_list, 
                 scaled_features = X_feature_scaler.transform(np.hstack((raw_pixel_intensity_features, raw_pixel_intensity_fd_features, raw_pixel_intensity_gradient_features)).reshape(1, -1))    
                 #make prediction
                 prediction = support_vector_classifier.predict(scaled_features)
-            
                 #if we have a positive prediction (i.e., vehicle) add the window coordinates to the list
-                if ((prediction == 1) and (support_vector_classifier.decision_function(scaled_features) > 1.1)):
+                #Also leveraging a decision_function to reduce false positives. This function determines distance 
+                #of the supplied feature data to the separating hyperplane (decision boundary), values close to the 
+                #boundary (lower value) mean confidence is low. Positive values returned from this function denote true 
+                #(on the vehicle side of the boundary), negative values denote false (on the non-vehicle side of the boundary). 
+                #The job of the SVM classifier is to find a hyperplane separating the space into areas associated with the specific 
+                #classification outcomes (target decision space). 
+                if ((prediction == 1) and (support_vector_classifier.decision_function(scaled_features) > 0.6)):
                     xbox_left = np.int(xleft * cur_scale_factor)
                     ytop_draw = np.int(ytop * cur_scale_factor)
                     win_draw = np.int(window * cur_scale_factor)
                     #add this window's coords to our list
                     positive_detection_window_coordinates.append([(xbox_left, ytop_draw + y_axis_start), (xbox_left + win_draw, ytop_draw + win_draw + y_axis_start)]) 
-    #return     
+    #return set of window coordinates associated with positive predictions and meeting the decision_function threshold criteria     
     return positive_detection_window_coordinates
